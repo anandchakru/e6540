@@ -1,0 +1,45 @@
+#!/bin/bash
+
+echo -e "01. TV resolution to 1600x900"
+xrandr --output HDMI-1 --primary --mode 1600x900
+
+echo -e "\n\n\n\t02. Disable primary monitor"
+xrandr --output eDP-1 --off
+
+echo -e "\n\n\n\t03. Set screen timeout to never"
+gsettings set org.gnome.desktop.session idle-delay 0
+
+echo -e "\n\n\n\t04. Ignore Lid Switch"
+echo "HandleLidSwitch=ignore" | sudo tee -a /etc/systemd/logind.conf
+
+echo -e "\n\n\n\t05. Set HDMI audio"
+pacmd set-default-sink $(pactl list short sinks | grep hdmi | awk '{print $2}')
+
+echo -e "\n\n\n\t06. Set timezone to PT"
+sudo timedatectl set-timezone America/Los_Angeles
+echo "America/Los_Angeles" | sudo tee /etc/timezone
+
+echo -e "\n\n\n\t07. Extracting google roaming profile"
+if [ -d "~/.config/google-chrome/Default" ]
+then
+  mv ~/.config/google-chrome/Default ~/.config/google-chrome/Default-$(date +"%Y%m%d%H%M%S")
+else
+  mkdir -p ~/.config/google-chrome/Default
+fi
+unzip -qq /tmp/scripts/Default.zip -d ~/.config/google-chrome/
+
+echo -e "\n\n\n\t08. Install browser"
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo dpkg -i ./google-chrome*.deb
+sudo apt-get install -f
+
+echo -e "\n\n\n\t09. Taking a breath"
+sleep 5
+
+echo -e "\n\n\n\t10. Open browser (a)"
+nohup google-chrome netflix.com youtube.com einthusan.tv amazon.com/Amazon-Video/b?node=2858778011 > /dev/null 2>&1 & disown -a
+
+echo -e "\n\n\n\t11. Sleeping for 10"
+sleep 600
+echo -e "\n\n\n\t12. Bye."
+sleep 10
